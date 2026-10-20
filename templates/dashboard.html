@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Hello, {{ user['name'].split(' ')[0] }} 👋</h1>
+    <p class="muted">Add your appliances, press <b>Analyze &amp; Optimize</b>, and see where your electricity goes.</p>
+  </div>
+</div>
+
+<div id="errors" class="flash error hidden" role="alert"></div>
+
+<!-- STEP 1: appliances -->
+<section class="card">
+  <div class="card-head">
+    <h2><span class="step">1</span> Your appliances</h2>
+    <div class="toolbar">
+      <select id="preset-select" aria-label="Choose an appliance"></select>
+      <button class="btn small" id="add-preset" type="button">+ Add</button>
+      <button class="btn small ghost" id="add-custom" type="button">+ Custom</button>
+      <button class="btn small ghost" id="load-sample" type="button">Load sample home</button>
+      <button class="btn small ghost danger-text" id="clear-all" type="button">Clear</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data editable" id="appliance-table">
+      <thead>
+        <tr>
+          <th>Appliance</th><th title="Number of units">Qty</th><th title="Power rating in watts">Watts</th>
+          <th title="Current hours of use per day">Hours/day</th>
+          <th title="Lowest hours/day you would accept">Min hrs</th>
+          <th title="1 = easy to give up, 5 = essential">Priority</th>
+          <th title="Power drawn while plugged in but off">Standby W</th><th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="empty-hint" class="empty-hint hidden">No appliances yet - pick one above, or click <b>Load sample home</b>.</div>
+</section>
+
+<!-- STEP 2: settings -->
+<section class="card">
+  <h2><span class="step">2</span> Tariff &amp; preferences</h2>
+  <div class="form-grid">
+    <div>
+      <label for="tariff_mode">Tariff type</label>
+      <select id="tariff_mode">
+        <option value="flat">Flat rate</option>
+        <option value="slab">Slab-based (sample)</option>
+      </select>
+    </div>
+    <div id="rate-field">
+      <label for="tariff_rate">Rate (₹ / kWh)</label>
+      <input id="tariff_rate" type="number" step="0.01" min="0.5" max="100" value="8">
+    </div>
+    <div>
+      <label for="comfort">Comfort to keep: <b id="comfort-val">80%</b></label>
+      <input id="comfort" type="range" min="50" max="100" step="5" value="80">
+    </div>
+    <div>
+      <label for="cap">Daily cap (kWh, optional)</label>
+      <input id="cap" type="number" step="0.1" min="0.1" placeholder="e.g. 10">
+    </div>
+    <div>
+      <label for="actual">Last bill units (optional)</label>
+      <input id="actual" type="number" step="1" min="1" placeholder="e.g. 280">
+    </div>
+  </div>
+  <small class="muted" id="tariff-note">Demo tariff is ₹8/kWh. Savings are estimates and depend on real usage and your actual electricity rates.</small>
+  <div class="actions-row">
+    <button class="btn primary big" id="analyze" type="button">⚡ Analyze &amp; Optimize</button>
+    <span id="busy" class="muted hidden">Working…</span>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<div id="results" class="hidden">
+  <div class="results-head">
+    <h2 class="section-title">Results</h2>
+    <div class="toolbar">
+      <input id="save-title" type="text" maxlength="80" placeholder="Name this analysis (auto-saved to history)">
+      <button class="btn small" id="save-btn" type="button">💾 Save name</button>
+      <button class="btn small ghost" id="csv-btn" type="button">⬇ CSV</button>
+      <button class="btn small ghost" id="print-btn" type="button">🖨 Print</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid-2">
+    <section class="card">
+      <h2>Where the energy goes</h2>
+      <div class="donut-layout"><div id="donut" class="chart-box"></div><ul id="donut-legend" class="legend"></ul></div>
+    </section>
+    <section class="card">
+      <h2>Efficiency score</h2>
+      <div id="score" class="score-box"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Why? Rule-based recommendations</h2>
+    <p class="muted small-text">Each finding shows the exact IF condition that was met and the THEN advice.</p>
+    <div id="rules"></div>
+    <details class="rule-lib"><summary>How the rules work (all {{ cfg.rules|length }} rules)</summary><ul id="rule-lib"></ul></details>
+  </section>
+
+  <section class="card" id="opt-card">
+    <h2>Optimized usage plan</h2>
+    <div id="opt-summary"></div>
+    <div class="grid-2 tight">
+      <div><h3>Monthly energy: before vs after</h3><div id="bars" class="chart-box"></div></div>
+      <div><h3>Hill-climbing progress</h3><div id="trace" class="chart-box"></div><p class="muted small-text" id="algo-stats"></p></div>
+    </div>
+    <div class="table-wrap"><table class="data" id="plan-table"><thead>
+      <tr><th>Appliance</th><th class="num">Before (h/day)</th><th class="num">After (h/day)</th><th class="num">Change</th><th class="num">kWh/month saved</th><th class="num">₹/month saved</th></tr>
+    </thead><tbody></tbody></table></div>
+    <div id="moves"></div>
+  </section>
+
+  <section class="card" id="whatif-card">
+    <h2>What-if simulator</h2>
+    <p class="muted small-text">Drag the sliders to try your own usage. Totals update live using the same tariff.</p>
+    <div class="whatif-layout">
+      <div id="whatif-sliders" class="sliders"></div>
+      <div id="whatif-out" class="whatif-out"></div>
+    </div>
+  </section>
+
+  <section class="card" id="compare-card">
+    <h2>Before vs after (tariff <span id="tariff-label"></span>)</h2>
+    <div class="table-wrap"><table class="data" id="before-table"><thead>
+      <tr><th>Appliance</th><th class="num">kWh/day</th><th class="num">kWh/month</th><th class="num">₹/month</th><th class="num">Share</th></tr>
+    </thead><tbody></tbody></table></div>
+  </section>
+</div>
+
+<script id="cfg" type="application/json">{{ cfg|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

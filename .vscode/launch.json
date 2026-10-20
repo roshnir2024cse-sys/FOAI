@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "EcoWise AI: Run (F5)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "console": "integratedTerminal",
+      "env": { "FLASK_DEBUG": "0" },
+      "justMyCode": true
+    },
+    {
+      "name": "EcoWise AI: Run tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "unittest",
+      "args": ["discover", "-s", "tests", "-v"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

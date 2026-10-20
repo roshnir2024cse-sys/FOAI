@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Create account{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<section class="auth">
+  <aside class="auth-hero">
+    <div class="brand big"><span class="bolt">⚡</span> EcoWise <b>AI</b></div>
+    <h1>Create your account</h1>
+    <p>Save your analyses, track savings over time, and keep your tariff preferences in one place.</p>
+    <p class="tagline">Power your choices.</p>
+  </aside>
+
+  <div class="auth-card card">
+    <h2>Sign up</h2>
+    <p class="muted">It takes less than a minute.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="flash {{ cat }}" role="alert">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    <form method="post" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="name">Full name</label>
+      <input id="name" name="name" value="{{ form.name }}" placeholder="Your name" autocomplete="name" required autofocus>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" value="{{ form.email }}" placeholder="you@example.com" autocomplete="email" required>
+      <label for="password">Password</label>
+      <div class="pw-wrap">
+        <input id="password" name="password" type="password" placeholder="At least 8 characters, letters + numbers" autocomplete="new-password" required>
+        <button type="button" class="pw-toggle" data-toggle="password" aria-label="Show password">Show</button>
+      </div>
+      <div class="meter"><span id="meter-bar"></span></div>
+      <small class="muted" id="meter-text">Use 8+ characters with letters and numbers.</small>
+      <label for="confirm">Confirm password</label>
+      <input id="confirm" name="confirm" type="password" placeholder="Repeat password" autocomplete="new-password" required>
+      <button class="btn primary block" type="submit">Create account</button>
+    </form>
+    <p class="muted center">Already registered? <a href="{{ url_for('login') }}">Sign in</a></p>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}

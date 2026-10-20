@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="page-title">Saved analyses</h1>
+  <a class="btn primary" href="{{ url_for('dashboard') }}">+ New analysis</a>
+</div>
+
+{% if items %}
+<div class="kpis">
+  <div class="kpi"><span>Saved analyses</span><b>{{ items|length }}</b></div>
+  <div class="kpi"><span>Potential monthly saving (all runs)</span><b>₹{{ '{:,.0f}'.format(total_saved) }}</b></div>
+  <div class="kpi"><span>Latest monthly bill estimate</span><b>₹{{ '{:,.0f}'.format(items[0].cost_before) }}</b></div>
+</div>
+
+<div class="card">
+  <h2>Cost trend</h2>
+  <div id="trend" class="chart-box" data-points='{{ items|tojson|forceescape }}'></div>
+  <p class="muted small-text">Estimated monthly cost before vs after optimisation for each saved analysis (oldest to newest).</p>
+</div>
+
+<div class="card table-wrap">
+  <table class="data">
+    <thead><tr><th>Title</th><th>Saved on</th><th class="num">Units/month</th><th class="num">Cost now</th><th class="num">Optimised</th><th class="num">Saving</th><th></th></tr></thead>
+    <tbody>
+    {% for it in items %}
+      <tr data-id="{{ it.id }}">
+        <td>{{ it.title }}</td>
+        <td>{{ it.created_at }}</td>
+        <td class="num">{{ '{:,.0f}'.format(it.kwh_month) }}</td>
+        <td class="num">₹{{ '{:,.0f}'.format(it.cost_before) }}</td>
+        <td class="num">{% if it.cost_after is not none %}₹{{ '{:,.0f}'.format(it.cost_after) }}{% else %}-{% endif %}</td>
+        <td class="num good">{% if it.cost_after is not none %}₹{{ '{:,.0f}'.format(it.cost_before - it.cost_after) }}{% else %}-{% endif %}</td>
+        <td class="actions">
+          <a class="btn ghost small" href="{{ url_for('dashboard', load=it.id) }}">Open</a>
+          <button class="btn ghost small danger-text" data-delete="{{ it.id }}" type="button">Delete</button>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card center empty">
+  <div class="empty-icon">🗂️</div>
+  <h2>No saved analyses yet</h2>
+  <p class="muted">Run <b>Analyze &amp; Optimize</b> on the dashboard and it will be saved here automatically.</p>
+  <a class="btn primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1 class="page-title">Settings</h1>
+<div class="grid-2">
+  <form class="card" method="post" action="{{ url_for('settings') }}">
+    <h2>Profile &amp; default tariff</h2>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="name">Name</label>
+    <input id="name" name="name" value="{{ user['name'] }}" required>
+    <label>Email</label>
+    <input value="{{ user['email'] }}" disabled>
+    <label for="tariff_mode">Default tariff type</label>
+    <select id="tariff_mode" name="tariff_mode">
+      <option value="flat" {{ 'selected' if user['tariff_mode'] == 'flat' }}>Flat rate (Rs per kWh)</option>
+      <option value="slab" {{ 'selected' if user['tariff_mode'] == 'slab' }}>Slab-based (illustrative sample slabs)</option>
+    </select>
+    <label for="tariff_rate">Flat rate (Rs / kWh)</label>
+    <input id="tariff_rate" name="tariff_rate" type="number" step="0.01" min="0.5" max="100" value="{{ user['tariff_rate'] }}">
+    <small class="muted">The demo uses Rs 8/kWh. Check your electricity bill for your actual rate.</small>
+    <button class="btn primary" type="submit">Save changes</button>
+  </form>
+
+  <div>
+    <form class="card" method="post" action="{{ url_for('change_password') }}">
+      <h2>Change password</h2>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="current">Current password</label>
+      <input id="current" name="current" type="password" autocomplete="current-password" required>
+      <label for="new">New password</label>
+      <input id="new" name="new" type="password" autocomplete="new-password" required>
+      <label for="confirm">Confirm new password</label>
+      <input id="confirm" name="confirm" type="password" autocomplete="new-password" required>
+      <button class="btn primary" type="submit">Update password</button>
+    </form>
+
+    <form class="card danger-zone" method="post" action="{{ url_for('delete_account') }}" onsubmit="return confirm('Delete your account and all saved analyses? This cannot be undone.')">
+      <h2>Delete account</h2>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <p class="muted">Removes your account and every saved analysis permanently.</p>
+      <label for="del-pw">Confirm with your password</label>
+      <input id="del-pw" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn danger" type="submit">Delete my account</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
